@@ -1,73 +1,93 @@
 // accenture-todo-app JavaScript
 
+
 const todoInput = document.getElementById('new-todo');
 const addBtn = document.getElementById('add-btn');
 const todoList = document.getElementById('todo-list');
 
 let todos = [];
 
-// Load todos from localStorage
-function loadTodos() {
-    const stored = localStorage.getItem('accenture-todos');
+// Generate unique ID for each task
+const generateId = () => Date.now().toString() + Math.random().toString(36).slice(2);
+
+// Load todos from localStorage (key: 'todos')
+const loadTodos = () => {
+    const stored = localStorage.getItem('todos');
     todos = stored ? JSON.parse(stored) : [];
-}
+};
 
-// Save todos to localStorage
-function saveTodos() {
-    localStorage.setItem('accenture-todos', JSON.stringify(todos));
-}
+// Save todos to localStorage (key: 'todos')
+const saveTodos = () => {
+    localStorage.setItem('todos', JSON.stringify(todos));
+};
 
-// Render todos
-function renderTodos() {
+// Render todos with checkbox and delete button
+const renderTodos = () => {
     todoList.innerHTML = '';
-    todos.forEach((todo, idx) => {
+    todos.forEach((todo) => {
         const li = document.createElement('li');
         li.className = 'todo-item';
 
+        // Checkbox for completion
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = !!todo.completed;
+        checkbox.className = 'todo-checkbox';
+        checkbox.addEventListener('change', () => toggleComplete(todo.id));
+
+        // Task text
         const span = document.createElement('span');
         span.className = 'todo-text' + (todo.completed ? ' completed' : '');
         span.textContent = todo.text;
-        span.onclick = () => toggleComplete(idx);
 
+        // Delete button
         const delBtn = document.createElement('button');
         delBtn.className = 'delete-btn';
         delBtn.textContent = 'Delete';
-        delBtn.onclick = () => deleteTodo(idx);
+        delBtn.addEventListener('click', () => deleteTodo(todo.id));
 
+        li.appendChild(checkbox);
         li.appendChild(span);
         li.appendChild(delBtn);
         todoList.appendChild(li);
     });
-}
+};
 
-// Add new todo
-function addTodo() {
+// Add new todo with unique id
+const addTodo = () => {
     const text = todoInput.value.trim();
     if (!text) return;
-    todos.push({ text, completed: false });
+    const newTodo = {
+        id: generateId(),
+        text,
+        completed: false
+    };
+    todos.push(newTodo);
     saveTodos();
     renderTodos();
     todoInput.value = '';
     todoInput.focus();
-}
+};
 
-// Toggle complete
-function toggleComplete(idx) {
-    todos[idx].completed = !todos[idx].completed;
+// Toggle complete by id
+const toggleComplete = (id) => {
+    todos = todos.map(todo =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    );
     saveTodos();
     renderTodos();
-}
+};
 
-// Delete todo
-function deleteTodo(idx) {
-    todos.splice(idx, 1);
+// Delete todo by id
+const deleteTodo = (id) => {
+    todos = todos.filter(todo => todo.id !== id);
     saveTodos();
     renderTodos();
-}
+};
 
 // Event listeners
 addBtn.addEventListener('click', addTodo);
-todoInput.addEventListener('keydown', function (e) {
+todoInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addTodo();
 });
 
